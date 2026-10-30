@@ -1,4 +1,11 @@
 # Advanced RAG Document Assistant
+## 🚀 Live Demo
+
+Try the deployed application:
+
+[Advanced RAG Document Assistant](https://advanced-rag-document-assistant-xcyw6zc2eowkhrjjz3vcyu.streamlit.app/)
+
+Upload a PDF and ask questions to get answers grounded in the document, with source citations.
 
 An AI-powered document question-answering application that allows users
 to upload PDF documents, ask questions, and receive answers grounded
