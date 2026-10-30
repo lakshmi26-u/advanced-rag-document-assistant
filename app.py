@@ -1,5 +1,7 @@
-
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 import re
 import uuid
 import hashlib
@@ -44,7 +46,10 @@ def load_embedding_model():
 @st.cache_resource
 def load_database():
     client = chromadb.PersistentClient(path=DB_PATH)
-    return client.get_collection(COLLECTION_NAME)
+    return client.get_or_create_collection(
+        name=COLLECTION_NAME,
+        metadata={"hnsw:space": "cosine"}
+    )
 
 
 @st.cache_resource
@@ -59,6 +64,12 @@ def load_uploaded_database():
 @st.cache_resource
 def load_gemini():
     api_key = os.environ.get("GEMINI_API_KEY")
+
+    if not api_key:
+        try:
+            api_key = st.secrets["GEMINI_API_KEY"]
+        except (KeyError, FileNotFoundError):
+            api_key = None
 
     if not api_key:
         raise ValueError("GEMINI_API_KEY is not configured.")
@@ -164,7 +175,10 @@ def store_uploaded_pdf(uploaded_file):
 # --------------------------------
 
 def get_document_names():
-    names = ["University of Southern Indiana Handbook"]
+    names = []
+
+    if collection.count() > 0:
+        names.append("University of Southern Indiana Handbook")
 
     stored = uploaded_collection.get(
         include=["metadatas"]
@@ -198,10 +212,13 @@ def retrieve_relevant_chunks(
 
     relevant_chunks = []
 
-    if selected_document in [
-        "All documents",
-        "University of Southern Indiana Handbook"
-    ]:
+    if (
+        collection.count() > 0
+        and selected_document in [
+            "All documents",
+            "University of Southern Indiana Handbook"
+        ]
+    ):
 
         handbook_results = collection.query(
             query_embeddings=[query_embedding],
@@ -225,10 +242,10 @@ def retrieve_relevant_chunks(
                     "distance": distance
                 })
 
-    if selected_document in [
-        "All documents",
-        *get_document_names()[2:]
-    ]:
+    if (
+        uploaded_collection.count() > 0
+        and selected_document != "University of Southern Indiana Handbook"
+    ):
 
         query_args = {
             "query_embeddings": [query_embedding],
@@ -496,3 +513,15 @@ if question:
         except Exception as error:
 
             st.error(f"Something went wrong: {error}")
+
+
+    
+
+
+   
+
+
+   
+        
+
+    
